@@ -1,11 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { Table, message, Button, Space, Tooltip, Popconfirm, Input } from 'antd';
-import { EditOutlined, DeleteOutlined, EyeOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import {
+  Table,
+  message,
+  Button,
+  Space,
+  Tooltip,
+  Popconfirm,
+  Input,
+} from 'antd';
+import {
+  EditOutlined,
+  DeleteOutlined,
+  EyeOutlined,
+  PlusOutlined,
+  SearchOutlined,
+} from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-// Après correction
-
-// Import service API vendeur (à créer / séparer du service admin si souhaité)
-import { getProduitsVendeur, deleteProduitVendeur } from '../../../services/vendorProductService';
+import {
+  getProduitsVendeur,
+  deleteProduitVendeur,
+} from '../../../services/vendorProductService';
 
 const { Search } = Input;
 
@@ -19,10 +33,20 @@ const VendorProduits = () => {
     setLoading(true);
     try {
       const data = await getProduitsVendeur();
-      setProduits(data);
-      setFilteredProduits(data);
+
+      // Ensure valid array
+      const produitsArray = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.produits)
+        ? data.produits
+        : [];
+
+      setProduits(produitsArray);
+      setFilteredProduits(produitsArray);
     } catch (error) {
-      message.error('Erreur chargement produits');
+      message.error("Erreur lors du chargement des produits");
+      setProduits([]);
+      setFilteredProduits([]);
     } finally {
       setLoading(false);
     }
@@ -32,11 +56,11 @@ const VendorProduits = () => {
     fetchProduits();
   }, []);
 
-  // Recherche locale
   const onSearch = (value) => {
-    const filtered = produits.filter(
-      prod => prod.nom.toLowerCase().includes(value.toLowerCase()) ||
-              (prod.description && prod.description.toLowerCase().includes(value.toLowerCase()))
+    const search = value.toLowerCase();
+    const filtered = produits.filter((prod) =>
+      prod.nom.toLowerCase().includes(search) ||
+      (prod.description && prod.description.toLowerCase().includes(search))
     );
     setFilteredProduits(filtered);
   };
@@ -44,10 +68,10 @@ const VendorProduits = () => {
   const handleDelete = async (slug) => {
     try {
       await deleteProduitVendeur(slug);
-      message.success('Produit supprimé');
+      message.success('Produit supprimé avec succès');
       fetchProduits();
-    } catch {
-      message.error('Erreur suppression');
+    } catch (error) {
+      message.error('Erreur lors de la suppression');
     }
   };
 
@@ -61,13 +85,14 @@ const VendorProduits = () => {
       title: 'Prix',
       dataIndex: 'prix',
       key: 'prix',
-      render: (prix) => prix.toLocaleString() + ' FCFA',
+      render: (prix) => `${prix.toLocaleString()} FCFA`,
       align: 'right',
     },
     {
       title: 'Statut',
       dataIndex: 'status',
       key: 'status',
+      render: (status) => status || 'N/A',
     },
     {
       title: 'Actions',
@@ -75,12 +100,23 @@ const VendorProduits = () => {
       render: (_, record) => (
         <Space>
           <Tooltip title="Voir">
-            <Button icon={<EyeOutlined />} onClick={() => navigate(`/vendor/products/${record.slug}`)} />
+            <Button
+              icon={<EyeOutlined />}
+              onClick={() => navigate(`/vendor/products/${record.slug}`)}
+            />
           </Tooltip>
           <Tooltip title="Modifier">
-            <Button icon={<EditOutlined />} onClick={() => navigate(`/vendor/products/${record.slug}/edit`)} />
+            <Button
+              icon={<EditOutlined />}
+              onClick={() => navigate(`/vendor/products/${record.slug}/edit`)}
+            />
           </Tooltip>
-          <Popconfirm title="Confirmer la suppression ?" onConfirm={() => handleDelete(record.slug)}>
+          <Popconfirm
+            title="Confirmer la suppression ?"
+            onConfirm={() => handleDelete(record.slug)}
+            okText="Oui"
+            cancelText="Non"
+          >
             <Button icon={<DeleteOutlined />} danger />
           </Popconfirm>
         </Space>
@@ -91,13 +127,31 @@ const VendorProduits = () => {
   return (
     <div style={{ padding: 24 }}>
       <h2>Mes produits</h2>
-      <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/vendor/products/add')} style={{ marginBottom: 16 }}>
+
+      <Button
+        type="primary"
+        icon={<PlusOutlined />}
+        onClick={() => navigate('/vendor/products/add')}
+        style={{ marginBottom: 16 }}
+      >
         Ajouter un produit
       </Button>
 
-      <Search placeholder="Rechercher produit" enterButton={<SearchOutlined />} onSearch={onSearch} style={{ maxWidth: 400, marginBottom: 16 }} allowClear />
+      <Search
+        placeholder="Rechercher un produit"
+        enterButton={<SearchOutlined />}
+        onSearch={onSearch}
+        allowClear
+        style={{ maxWidth: 400, marginBottom: 16 }}
+      />
 
-      <Table dataSource={filteredProduits} columns={columns} rowKey={(rec) => rec.slug} loading={loading} />
+      <Table
+        dataSource={filteredProduits}
+        columns={columns}
+        rowKey={(record) => record.slug}
+        loading={loading}
+        pagination={{ pageSize: 10 }}
+      />
     </div>
   );
 };

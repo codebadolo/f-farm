@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { login as loginAPI, logout as logoutAPI } from '../services/authService';
+import api from '../services/api'; // your axios instance with baseURL and auth setup
 
 const AuthContext = createContext();
 
@@ -19,12 +20,18 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
-  const login = async (email, password) => {
-    const data = await loginAPI(email, password);
-    setUser(data.user);
-    setToken(data.token);
-    localStorage.setItem('token', data.token);
-  };
+const login = async (email, password) => {
+  const data = await loginAPI(email, password);
+  setUser(data.user);
+  setToken(data.token);
+
+  // Store token
+  localStorage.setItem('token', data.token);
+
+  // Set default Authorization header
+  api.defaults.headers.common['Authorization'] = `Token ${data.token}`;
+};
+
 
   const logout = async () => {
     await logoutAPI();
