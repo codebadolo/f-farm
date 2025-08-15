@@ -10,8 +10,8 @@ export const registerUser = async (userData) => {
 
 export const loginUser = async (credentials) => {
   // credentials: { email, password }
-  const response = await api.post('/login/', credentials);
-  return response.data; // { user, token, message }
+  const response = await api.post('/auth/login/', credentials);
+  return response.data;
 };
 
 export const logoutUser = async () => {

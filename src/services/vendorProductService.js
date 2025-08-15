@@ -8,7 +8,7 @@ import api from './api'; // réutilise la config axios et les interceptors
  * @param {Object} params
  */
 export const getProduitsVendeur = (params = {}) => {
-  return api.get('products/vendor/', { params }).then(res => res.data);
+  return api.get('products/mes-produits/', { params }).then(res => res.data);
 };
 
 /**
